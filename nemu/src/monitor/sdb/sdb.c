@@ -39,6 +39,10 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+static int cmd_si(char *args);
+
+static int cmd_info(char *args);
+
 static struct {
   const char *name;
   const char *description;
@@ -47,6 +51,9 @@ static struct {
   { "help", "Display informations about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
+  { "si", "step n command and stop", cmd_si},
+  { "info", "output infomation of register or watchpoint", cmd_info}
+
 
   /* TODO: Add more commands */
 
@@ -73,6 +80,45 @@ static int cmd_help(char *args) {
       }
     }
     printf("Unknown command '%s'\n", arg);
+  }
+  return 0;
+}
+
+static int cmd_si(char *args){
+  int step = 1;
+  if (args != NULL) {
+    char * arg = strtok(args, " ");
+    for(char * cptr = arg; *cptr != '\0'; cptr++) {
+      if (!isdigit(*cptr)) {
+        printf("si: invalid argument\n");
+        return 0;
+      }
+    }
+    step = atoi(arg);
+  }
+  printf("step n command and stop %d\n", step);
+  cpu_exec(step);
+  return 0;
+}
+
+int cmd_info(char * args){
+  if (args == NULL) {
+    printf("info: no argument\n");
+    return 0;
+  }
+  char * arg = strtok(args, " ");
+  if (strcmp(arg, "r") == 0) {
+    isa_reg_display();
+  }
+  else if (strcmp(arg, "w") == 0) {
+    // init_wp_pool();
+    // printf("watchpoint pool:\n");
+    // for (int i = 0; i < wp_pool_size; i++) {
+    //   printf("%d: %s\n", i, wp_pool[i].expr);
+    // }
+  }
+  else {
+    printf("info: invalid argument\n");
   }
   return 0;
 }

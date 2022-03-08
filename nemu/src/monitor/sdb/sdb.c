@@ -8,6 +8,7 @@ static int is_batch_mode = false;
 
 void init_regex();
 void init_wp_pool();
+void test_expr();
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -43,6 +44,14 @@ static int cmd_si(char *args);
 
 static int cmd_info(char *args);
 
+static int cmd_x(char *args);
+
+static int cmd_p(char *args);
+
+static int cmd_w(char *args);
+
+static int cmd_d(char *args);
+
 static struct {
   const char *name;
   const char *description;
@@ -52,11 +61,11 @@ static struct {
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
   { "si", "step n command and stop", cmd_si},
-  { "info", "output infomation of register or watchpoint", cmd_info}
-
-
-  /* TODO: Add more commands */
-
+  { "info", "output infomation of register or watchpoint", cmd_info},
+  { "x", "output continual N Bytes", cmd_x},
+  { "p", "eval the value of expression", cmd_p},
+  { "w", "watch val", cmd_w},
+  { "d", "delete watch point", cmd_d},
 };
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -123,6 +132,37 @@ int cmd_info(char * args){
   return 0;
 }
 
+int cmd_x(char *args){
+  return 0;
+}
+
+int cmd_d(char *args){
+  return 0;
+}
+
+int cmd_w(char *args){
+  return 0;
+}
+
+int cmd_p(char *args){
+  if (args == NULL) {
+    printf("p: no argument\n");
+    return 0;
+  }
+  bool success;
+  word_t val = expr(args, &success);
+
+  if(success) {
+    printf("%s = %lu\n", args, val);
+  }
+  else {
+    printf("p: invalid argument\n");
+  }
+
+  return 0;
+}
+
+
 void sdb_set_batch_mode() {
   is_batch_mode = true;
 }
@@ -168,6 +208,7 @@ void sdb_mainloop() {
 void init_sdb() {
   /* Compile the regular expressions. */
   init_regex();
+  test_expr();
 
   /* Initialize the watchpoint pool. */
   init_wp_pool();

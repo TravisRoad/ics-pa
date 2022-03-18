@@ -3,12 +3,15 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include <memory/paddr.h>
 
 static int is_batch_mode = false;
 
 void init_regex();
 void init_wp_pool();
 void test_expr();
+
+word_t return_val = 0;
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -52,6 +55,8 @@ static int cmd_w(char *args);
 
 static int cmd_d(char *args);
 
+static int cmd_px(char *args);
+
 static struct {
   const char *name;
   const char *description;
@@ -66,6 +71,7 @@ static struct {
   { "p", "eval the value of expression", cmd_p},
   { "w", "watch val", cmd_w},
   { "d", "delete watch point", cmd_d},
+  { "px", "print last val in hex", cmd_px},
 };
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -127,12 +133,54 @@ int cmd_info(char * args){
     // }
   }
   else {
-    printf("info: invalid argument\n");
+    bool success;
+    word_t val = isa_reg_str2val(arg, &success);
+    if(success) {
+      printf("%s = 0x%016lx\n", arg, val);
+    }
+    else {
+      printf("info: invalid argument\n");
+    }
   }
   return 0;
 }
 
 int cmd_x(char *args){
+  if (args == NULL) {
+    printf("x: no argument\n");
+    return 0;
+  }
+  char * arg = strtok(args, " ");
+  //TODO: check if arg is valid
+
+  for(char* i = arg; *i != '\0'; i++){
+    if (!isdigit(*i)) {
+      ERROR("x: invalid argument\n");
+      return 0;
+    }
+  }
+
+  int n;
+  sscanf(arg, "%d", &n);
+
+  bool success;
+  paddr_t val = expr(arg + strlen(arg) + 1, &success);
+
+  if (!success) {
+    printf("x: invalid expression\n");
+    return 0;
+  }
+  if ( val < CONFIG_MBASE){
+    printf("x: invalid address\n");
+    return 0;
+  }
+
+  uint8_t * memptr = guest_to_host(val);
+
+  for(int i = 0; i < n; i++)
+    printf("%02x ", memptr[i]);
+
+  putchar('\n');
   return 0;
 }
 
@@ -152,12 +200,21 @@ int cmd_p(char *args){
   bool success;
   word_t val = expr(args, &success);
 
+  return_val = val;
+
   if(success) {
     printf("%s = %lu\n", args, val);
   }
   else {
     printf("p: invalid argument\n");
   }
+
+  return 0;
+}
+
+int cmd_px(char *args){
+
+  printf("0x%016lx\n", return_val);
 
   return 0;
 }

@@ -8,12 +8,24 @@ const char *regs[] = {
   "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
 
+// #define NR_REGS ARRLEN(regs)
+#define NR_REGS 32
+
 void isa_reg_display() {
-  for(int i = 0; i < 32; ++i){
+  for (int i = 0; i < NR_REGS; ++i) {
     printf("%3s: 0x%016lx\n", regs[i], gpr(i));
   }
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
+  int i;
+  for (i = 0; i < NR_REGS; ++i) {
+    if (strcmp(regs[i], s) == 0) {
+      *success = true;
+      return gpr(i);
+      break;
+    }
+  }
+  *success = false;
   return 0;
 }
